@@ -1,3 +1,8 @@
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from './authcontext.jsx'
+import './auth.css'
+
 export default function Signup() {
   const [formData, setFormData] = useState({
     username: '',
@@ -40,6 +45,8 @@ export default function Signup() {
     return errs
   }
 
+  const { signup } = useAuth()
+
   const handleSignupSubmit = async (e) => {
     e.preventDefault()
     setErrors({})
@@ -50,89 +57,96 @@ export default function Signup() {
     }
     try {
       setIsSubmitting(true)
-      await axios.post('/api/auth/register', {
-        name: formData.username.trim(),
+      await signup({
+        username: formData.username.trim(),
         email: formData.email.trim(),
         password: formData.password
       })
-      navigate('/login')
+      navigate('/dashboard')
     } catch (err) {
-      if (err.response && err.response.data) {
-        const resp = err.response.data
-        if (resp.errors) {
-          setErrors(resp.errors)
-        } else if (resp.message) {
-          setErrors({ general: resp.message })
-        } else {
-          setErrors({ general: 'An unexpected error occurred. Please try again.' })
-        }
-      } else {
-        setErrors({ general: 'An unexpected error occurred. Please try again.' })
-      }
+      setErrors({ general: err.message || 'An unexpected error occurred. Please try again.' })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <form onSubmit={handleSignupSubmit} noValidate>
-      {errors.general && <div className="error">{errors.general}</div>}
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2 className="auth-title">Create Account</h2>
+        {errors.general && <div className="error-message" role="alert">{errors.general}</div>}
+        
+        <form onSubmit={handleSignupSubmit} noValidate>
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              className={`form-input ${errors.username ? 'error' : ''}`}
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Choose a username"
+              disabled={isSubmitting}
+            />
+            {errors.username && <span className="error-text">{errors.username}</span>}
+          </div>
 
-      <div className="form-group">
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          name="username"
-          type="text"
-          value={formData.username}
-          onChange={handleChange}
-          disabled={isSubmitting}
-        />
-        {errors.username && <span className="error">{errors.username}</span>}
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className={`form-input ${errors.email ? 'error' : ''}`}
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              disabled={isSubmitting}
+            />
+            {errors.email && <span className="error-text">{errors.email}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              className={`form-input ${errors.password ? 'error' : ''}`}
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              disabled={isSubmitting}
+            />
+            {errors.password && <span className="error-text">{errors.password}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
+              disabled={isSubmitting}
+            />
+            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+          </div>
+
+          <button type="submit" className="auth-button" disabled={isSubmitting}>
+            {isSubmitting && <span className="loading-spinner"></span>}
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
+        
+        <div className="auth-link">
+          <p>Already have an account? <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Sign in here</a></p>
+        </div>
       </div>
-
-      <div className="form-group">
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          disabled={isSubmitting}
-        />
-        {errors.email && <span className="error">{errors.email}</span>}
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          disabled={isSubmitting}
-        />
-        {errors.password && <span className="error">{errors.password}</span>}
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="confirmPassword">Confirm Password</label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          disabled={isSubmitting}
-        />
-        {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
-      </div>
-
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Signing up...' : 'Sign Up'}
-      </button>
-    </form>
+    </div>
   )
 }

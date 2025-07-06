@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './authcontext.jsx'
 import Header from './header'
 import LoginPage from './login'
 import SignupPage from './signup'
@@ -11,7 +12,7 @@ function App() {
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light')
   const [theme, setTheme] = useState(initialTheme)
-  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(localStorage.getItem('authToken')))
+  const { isAuthenticated, logout } = useAuth()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -22,26 +23,16 @@ function App() {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
   }
 
-  const handleLogin = token => {
-    localStorage.setItem('authToken', token)
-    setIsAuthenticated(true)
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('authToken')
-    setIsAuthenticated(false)
-  }
-
   return (
     <BrowserRouter>
       {isAuthenticated && (
-        <Header theme={theme} onThemeToggle={handleThemeToggle} onLogout={handleLogout} />
+        <Header theme={theme} onThemeToggle={handleThemeToggle} onLogout={logout} />
       )}
       <Routes>
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />
+            isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
           }
         />
         <Route
